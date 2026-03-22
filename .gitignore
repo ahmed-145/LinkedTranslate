@@ -1,5 +1,10 @@
 # Keep the PRD private
 LinkedTranslate_PRD_v2.md
+LinkedTranslate_PRD_v2.5.md
+
+# Environment files with secrets — never commit these
+.env
+.env.*
 
 # OS files
 .DS_Store

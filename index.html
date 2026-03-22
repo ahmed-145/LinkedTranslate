@@ -615,8 +615,17 @@ function splitTags(text) {
 function renderLinkedIn(text) {
   const {body,tags} = splitTags(text);
   $postBody.textContent = body;
-  if (S.hashtags && tags) { $postTags.textContent=tags; $postTags.classList.add('visible'); }
-  else { $postTags.textContent=''; $postTags.classList.remove('visible'); }
+  // enforce RTL for Arabic mode at render time
+  const isArabic = S.mode === 'arabic';
+  $postBody.setAttribute('dir', isArabic ? 'rtl' : 'ltr');
+  $postBody.style.direction  = isArabic ? 'rtl' : 'ltr';
+  $postBody.style.textAlign  = isArabic ? 'right' : 'left';
+  if (S.hashtags && tags) {
+    $postTags.textContent = tags;
+    $postTags.setAttribute('dir', isArabic ? 'rtl' : 'ltr');
+    $postTags.style.direction = isArabic ? 'rtl' : 'ltr';
+    $postTags.classList.add('visible');
+  } else { $postTags.textContent=''; $postTags.classList.remove('visible'); }
   // title tweak for reverse mode
   $('liTitle').textContent = S.mode==='reverse' ? '🔍 What actually happened:' : 'Thought Leader | Disrupting Things';
   $engL.textContent = (Math.floor(Math.random()*801)+400).toLocaleString()+' reactions';

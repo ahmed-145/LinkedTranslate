@@ -73,6 +73,13 @@ textarea#userInput:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(10,1
 textarea#userInput.shake{animation:shake .45s ease}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
 
+/* example prompt pills */
+.example-pills{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:10px}
+.example-label{font-size:12px;color:var(--light);font-weight:500;white-space:nowrap}
+.ex-pill{padding:5px 12px;border:1.5px solid #E0DDD8;background:#F5F5F5;border-radius:16px;font-family:'DM Sans',sans-serif;font-size:12px;color:#555;cursor:pointer;transition:all .18s;white-space:nowrap;user-select:none}
+.ex-pill:hover{border-color:var(--blue);color:var(--blue);background:#f0f7ff}
+.ex-pill.selected{border-color:var(--blue);color:var(--blue);background:#e8f0fe}
+
 /* controls card */
 .controls-section{animation:slideUp .5s .2s ease both}
 .sl-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
@@ -122,10 +129,13 @@ input[type=range]::-moz-range-progress{height:6px;background:var(--blue);border-
 .li-rxns{font-size:16px;margin-right:4px}
 .dot{color:var(--light);margin:0 3px}
 .li-actions{display:flex;gap:12px;padding:14px 20px 16px}
-#copyBtn,#regenBtn{flex:1;padding:10px 16px;border-radius:var(--r-btn);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+#copyBtn,#shareBtn,#regenBtn{flex:1;padding:10px 16px;border-radius:var(--r-btn);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
 #copyBtn{background:var(--white);border:1.5px solid var(--border);color:var(--text)}
 #copyBtn:hover{border-color:var(--blue);color:var(--blue);background:#f0f7ff}
 #copyBtn.copied{background:var(--ok);border-color:var(--ok);color:#fff}
+#shareBtn{background:var(--white);border:1.5px solid var(--border);color:var(--text)}
+#shareBtn:hover{border-color:#7c3aed;color:#7c3aed;background:#f5f0ff}
+#shareBtn.saved{background:#7c3aed;border-color:#7c3aed;color:#fff}
 #regenBtn{background:var(--blue);border:1.5px solid var(--blue);color:#fff}
 #regenBtn:hover{background:var(--blue-dk);border-color:var(--blue-dk)}
 #regenBtn:disabled{opacity:.7;cursor:not-allowed}
@@ -187,8 +197,9 @@ footer{text-align:center;font-size:12px;color:var(--light);padding:0 0 20px;anim
   .tgl{font-size:12px;padding:8px 14px}
   #translateBtn{font-size:15px;height:50px}
   .li-actions,.email-actions{flex-direction:column}
-  #copyBtn,#regenBtn,#copyEmailBtn,#regenEmailBtn{flex:none;width:100%}
+  #copyBtn,#shareBtn,#regenBtn,#copyEmailBtn,#regenEmailBtn{flex:none;width:100%}
   .modal{padding:24px 18px 20px}
+  .ex-pill{font-size:11px;padding:4px 10px}
 }
 </style>
 </head>
@@ -254,6 +265,9 @@ footer{text-align:center;font-size:12px;color:var(--light);padding:0 0 20px;anim
   <section class="card input-section">
     <div class="card-label">💬 What actually happened?</div>
     <textarea id="userInput" rows="3" aria-label="Describe what happened"></textarea>
+    <div class="example-pills" id="examplePills" aria-label="Example prompts">
+      <span class="example-label">💡 Try:</span>
+    </div>
   </section>
 
   <!-- Controls (hidden in Reverse / CEO Email mode) -->
@@ -307,6 +321,7 @@ footer{text-align:center;font-size:12px;color:var(--light);padding:0 0 20px;anim
     </div>
     <div class="li-actions">
       <button id="copyBtn">📋 Copy Post</button>
+      <button id="shareBtn">📸 Share</button>
       <button id="regenBtn">🔄 Regenerate</button>
     </div>
   </div>
@@ -329,6 +344,7 @@ footer{text-align:center;font-size:12px;color:var(--light);padding:0 0 20px;anim
   <footer>LinkedTranslate &mdash; because someone had to.</footer>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 // ── STATE ────────────────────────────────────────────────────────────────────
 const S = {
@@ -342,6 +358,29 @@ const S = {
   hashtags:   false,
   isLoading:  false,
   lastInput:  '',
+};
+
+// ── DATA ────────────────────────────────────────────────────────────────────
+const CEO_NAMES = ['Michael Chen','Sarah Williams','David Park','Jennifer Martinez','Robert Kim','Amanda Foster'];
+
+const FAKE_PROFILES = [
+  { name: 'Alex Johnson',    title: 'Thought Leader | Disrupting Things' },
+  { name: 'Sarah Mitchell',  title: 'Chief Disruption Officer | Speaker' },
+  { name: 'Ryan Park',       title: 'Entrepreneur | 3x Founder | Visionary' },
+  { name: 'Emma Davis',      title: 'People-First Leader | Growth Hacker' },
+  { name: 'Marcus Webb',     title: 'Executive Coach | LinkedIn Top Voice' },
+  { name: 'Priya Sharma',    title: 'Future of Work Evangelist | Keynote Speaker' },
+  { name: "James O'Brien",   title: 'CEO @ StealthStartup | Angel Investor' },
+  { name: 'Layla Hassan',    title: 'Purpose-Driven Leader | Culture Builder' },
+];
+
+const EXAMPLE_PROMPTS = {
+  linkedin:  ['I got fired today', 'I cried in the bathroom at work', 'I live with my mom and have no job', 'I copy pasted code from Stack Overflow'],
+  reverse:   ['I\u2019m thrilled to announce I\u2019m starting a new chapter', 'After much reflection I\u2019ve decided to pursue aligned opportunities', 'I\u2019ve been given a unique opportunity to step back and reflect', 'Excited to share I\u2019m embarking on an exciting new journey'],
+  arabic:    ['\u0631\u0633\u0628\u062a \u0641\u064a \u0627\u0644\u0627\u0645\u062a\u062d\u0627\u0646', '\u0627\u062a\u0637\u0631\u062f\u062a \u0645\u0646 \u0627\u0644\u0634\u063a\u0644', '\u0645\u0627 \u0639\u0646\u062f\u064a \u0648\u0638\u064a\u0641\u0629', 'i failed my exam'],
+  passive:   ['my coworker got promoted over me', 'my boss took credit for my work', 'I got laid off but my manager kept his job', 'they gave the project to someone less qualified'],
+  industry:  ['I copy pasted code from Stack Overflow', 'I have no idea what I\u2019m doing at my job', 'I missed all my targets this quarter', 'I spent the whole day in useless meetings'],
+  ceo:       ['we are laying off 200 people', 'the company is going bankrupt', 'we missed earnings by 40%', 'we are cancelling the holiday bonus'],
 };
 
 // ── MODE CONFIG ───────────────────────────────────────────────────────────────
@@ -405,6 +444,8 @@ const $emailBody   = $('emailBody');
 const $emailDate   = $('emailDate');
 const $copyEmailBtn= $('copyEmailBtn');
 const $regenEmailBtn=$('regenEmailBtn');
+const $exPills     = $('examplePills');
+const $shareBtn    = $('shareBtn');
 const $controls    = $('controlsCard');
 const $indWrap     = $('industryWrap');
 const $indSel      = $('industrySelect');
@@ -435,6 +476,23 @@ document.querySelectorAll('.mode-pill').forEach(p => {
   });
 });
 
+function renderExamples(mode) {
+  $exPills.querySelectorAll('.ex-pill').forEach(p => p.remove());
+  const pills = EXAMPLE_PROMPTS[mode] || EXAMPLE_PROMPTS.linkedin;
+  pills.forEach(text => {
+    const btn = document.createElement('button');
+    btn.className = 'ex-pill';
+    btn.textContent = text;
+    btn.addEventListener('click', () => {
+      $textarea.value = text;
+      $exPills.querySelectorAll('.ex-pill').forEach(p => p.classList.remove('selected'));
+      btn.classList.add('selected');
+      $textarea.focus();
+    });
+    $exPills.appendChild(btn);
+  });
+}
+
 function applyMode(mode) {
   S.mode = mode;
   const cfg = MODES[mode];
@@ -449,6 +507,8 @@ function applyMode(mode) {
   // hide output cards on mode switch
   $outputCard.classList.remove('visible');
   $emailCard.classList.remove('visible');
+  // refresh example pills for this mode
+  renderExamples(mode);
 }
 
 $indSel.addEventListener('change', () => { S.industry = $indSel.value; });
@@ -626,8 +686,11 @@ function renderLinkedIn(text) {
     $postTags.style.direction = isArabic ? 'rtl' : 'ltr';
     $postTags.classList.add('visible');
   } else { $postTags.textContent=''; $postTags.classList.remove('visible'); }
+  // pick random fake profile on each generation
+  const prof = FAKE_PROFILES[Math.floor(Math.random() * FAKE_PROFILES.length)];
+  document.querySelector('.li-name').textContent = prof.name;
   // title tweak for reverse mode
-  $('liTitle').textContent = S.mode==='reverse' ? '🔍 What actually happened:' : 'Thought Leader | Disrupting Things';
+  $('liTitle').textContent = S.mode==='reverse' ? '🔍 What actually happened:' : prof.title;
   $engL.textContent = (Math.floor(Math.random()*801)+400).toLocaleString()+' reactions';
   $engC.textContent = (Math.floor(Math.random()*351)+50)+' comments';
   $engR.textContent = (Math.floor(Math.random()*121)+20)+' reposts';
@@ -639,8 +702,14 @@ function renderLinkedIn(text) {
 
 // ── RENDER: CEO Email card ────────────────────────────────────────────────────
 function renderEmail(text) {
+  // replace [Your Name] / [CEO Name] placeholders with a random name (Fix 2)
+  const ceoName = CEO_NAMES[Math.floor(Math.random() * CEO_NAMES.length)];
+  let cleaned = text
+    .replace(/\[Your Name\]/gi, ceoName)
+    .replace(/\[CEO Name\]/gi, ceoName)
+    .replace(/\[Name\]/gi, ceoName);
   // parse Subject: line
-  const lines = text.split('\n');
+  const lines = cleaned.split('\n');
   let subjectLine = ''; let bodyLines = [];
   for (let i=0;i<lines.length;i++) {
     if (lines[i].toLowerCase().startsWith('subject:')) {
@@ -652,6 +721,7 @@ function renderEmail(text) {
   if (!subjectLine) { subjectLine='An Important Update on Our Path Forward'; bodyLines=lines; }
   $emailSubj.textContent = subjectLine;
   $emailBody.textContent = bodyLines.join('\n').trim();
+  $('emailFrom').textContent = ceoName;
   $emailCard.classList.remove('visible'); void $emailCard.offsetWidth;
   $emailCard.classList.add('visible');
   $outputCard.classList.remove('visible');
@@ -671,12 +741,18 @@ async function translate() {
     showErr('Tell us what happened first!'); $textarea.focus(); return;
   }
   S.lastInput = input;
+  // clear previous output immediately (Fix 3)
+  $postBody.textContent = '';
+  $postTags.textContent = ''; $postTags.classList.remove('visible');
+  $outputCard.style.opacity = '0.5';
   setLoading(true);
   try {
     const out = await callGroq(input);
+    $outputCard.style.opacity = '';
     if (MODES[S.mode].outputCard === 'email') renderEmail(out);
     else renderLinkedIn(out);
   } catch(e) {
+    $outputCard.style.opacity = '';
     showErr(e.message||'Something went wrong. Please try again.');
   } finally { setLoading(false); }
 }
@@ -712,6 +788,19 @@ $copyBtn.addEventListener('click', () => {
 $copyEmailBtn.addEventListener('click', () => {
   const t = `Subject: ${$emailSubj.textContent}\n\n${$emailBody.textContent}`;
   doCopy(t, $copyEmailBtn);
+});
+$shareBtn.addEventListener('click', async () => {
+  try {
+    $shareBtn.textContent = '⏳ Saving...';
+    const canvas = await html2canvas($outputCard, {scale:2, backgroundColor:'#ffffff', useCORS:true});
+    const link = document.createElement('a');
+    link.download = 'linkedtranslate-post.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    $shareBtn.textContent = '✅ Saved!';
+    $shareBtn.classList.add('saved');
+    setTimeout(() => { $shareBtn.textContent = '📸 Share'; $shareBtn.classList.remove('saved'); }, 2000);
+  } catch { $shareBtn.textContent = '📸 Share'; }
 });
 
 // ── EVENT LISTENERS ───────────────────────────────────────────────────────────

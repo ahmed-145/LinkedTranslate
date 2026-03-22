@@ -600,9 +600,12 @@ function hideErr() { clearTimeout(errTimer); $errMsg.style.display='none'; }
 // ── RENDER: LinkedIn card ─────────────────────────────────────────────────────
 function splitTags(text) {
   const lines = text.split('\n');
-  const ti = lines.findLastIndex(l => l.trim().startsWith('#'));
+  let ti = -1;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].trim().startsWith('#')) { ti = i; break; }
+  }
   if (ti !== -1 && S.hashtags) {
-    return {body: lines.slice(0,ti).join('\n').trim(), tags: lines[ti].trim()};
+    return {body: lines.slice(0, ti).join('\n').trim(), tags: lines[ti].trim()};
   }
   return {body: text.trim(), tags: ''};
 }

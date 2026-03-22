@@ -6,8 +6,6 @@
 
 Turn any mundane thing you did into a glazed, over-the-top LinkedIn post — powered by Groq AI.
 
-![LinkedTranslate screenshot](https://raw.githubusercontent.com/ahmed-145/LinkedTranslate/main/screenshot.png)
-
 ---
 
 ## What it does
@@ -22,12 +20,25 @@ You type something embarrassingly normal. LinkedTranslate rewrites it like you j
 
 ---
 
+## Translation Modes
+
+| Mode | What it does |
+|---|---|
+| 💼 **LinkedIn** | Classic LinkedIn glaze — the original mode |
+| 🔄 **Reverse** | Paste a LinkedIn post, get back what actually happened in brutal plain English |
+| 🌍 **Arabic** | Glazed Arabic LinkedIn post — formal MSA mixed with English buzzwords, RTL output |
+| 😤 **Passive Aggressive** | Sounds gracious and professional. Seething underneath. |
+| 💼 **Industry** | LinkedIn glaze with industry-specific dialect (Tech / Finance / Marketing / Healthcare / Academia) |
+| 📧 **CEO Email** | Turns bad news into a vague, caring all-hands email that says absolutely nothing |
+
+---
+
 ## Features
 
 - ⚡ **3 intensity levels** — Professional → Thought Leader → Full LinkedIn 🚀
-- 💡 **Life Lesson mode** — ends every post with a profound takeaway
-- 😂 **Emoji mode** — sprinkle liberally
-- 📝 **Essay mode** — classic LinkedIn scroll-bait format (one sentence per line)
+- 💡 **Life Lesson** — ends every post with a profound takeaway
+- 😂 **Emojis** — sprinkle them liberally
+- 📝 **Essay mode** — classic scroll-bait, one sentence per line
 - \# **Hashtags** — auto-generated LinkedIn-core hashtags
 - 🔐 **API key stored locally** — never leaves your browser
 - 📋 **One-click copy** — paste directly to LinkedIn

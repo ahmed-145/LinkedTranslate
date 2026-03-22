@@ -1,0 +1,11 @@
+# Keep the PRD private
+LinkedTranslate_PRD_v2.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedTranslate — Google Translate. But for LinkedIn.</title>
+  <meta name="description" content="Say what you actually did. We'll make it sound like you changed the world. LinkedTranslate turns mundane moments into glazed LinkedIn gold using AI." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── RESET & BASE ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --li-blue: #0A66C2;
+      --li-blue-dark: #004182;
+      --accent: #FFD700;
+      --accent-dark: #e6c200;
+      --bg: #F3F2EF;
+      --card-bg: #ffffff;
+      --text: #1a1a2e;
+      --muted: #666;
+      --lighter: #999;
+      --border: #e0ddd8;
+      --error: #cc1016;
+      --success: #057642;
+      --radius-card: 12px;
+      --radius-input: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-hover: 0 8px 24px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ─── FLOATING BACKGROUND EMOJIS ─── */
+    .bg-emojis {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .bg-emoji {
+      position: absolute;
+      opacity: 0.07;
+      animation: floatUp linear infinite;
+      user-select: none;
+      pointer-events: none;
+    }
+    .bg-emoji:nth-child(1)  { left: 5%;  animation-duration: 18s; animation-delay: 0s;   font-size: 40px; }
+    .bg-emoji:nth-child(2)  { left: 15%; animation-duration: 22s; animation-delay: -4s;  font-size: 30px; }
+    .bg-emoji:nth-child(3)  { left: 28%; animation-duration: 16s; animation-delay: -8s;  font-size: 48px; }
+    .bg-emoji:nth-child(4)  { left: 42%; animation-duration: 25s; animation-delay: -2s;  font-size: 36px; }
+    .bg-emoji:nth-child(5)  { left: 58%; animation-duration: 20s; animation-delay: -6s;  font-size: 44px; }
+    .bg-emoji:nth-child(6)  { left: 70%; animation-duration: 19s; animation-delay: -3s;  font-size: 32px; }
+    .bg-emoji:nth-child(7)  { left: 82%; animation-duration: 23s; animation-delay: -9s;  font-size: 50px; }
+    .bg-emoji:nth-child(8)  { left: 92%; animation-duration: 17s; animation-delay: -1s;  font-size: 38px; }
+    .bg-emoji:nth-child(9)  { left: 50%; animation-duration: 21s; animation-delay: -5s;  font-size: 28px; }
+    .bg-emoji:nth-child(10) { left: 35%; animation-duration: 24s; animation-delay: -7s;  font-size: 46px; }
+
+    @keyframes floatUp {
+      0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: 0.07; }
+      90%  { opacity: 0.07; }
+      100% { transform: translateY(-20vh) rotate(30deg); opacity: 0; }
+    }
+
+    /* ─── LAYOUT ─── */
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 24px;
+      animation: slideUp 0.5s ease both;
+    }
+    .logo-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(22px, 4vw, 28px);
+      color: var(--li-blue);
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-icon {
+      background: var(--li-blue);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .api-key-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--border);
+      background: white;
+      border-radius: 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .api-key-btn:hover {
+      border-color: var(--li-blue);
+      color: var(--li-blue);
+      background: #f0f7ff;
+    }
+    .api-key-btn.has-key {
+      border-color: var(--success);
+      color: var(--success);
+      background: #f0faf5;
+    }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    /* ─── INPUT SECTION ─── */
+    .input-section { animation: slideUp 0.5s 0.1s ease both; }
+    .card-label {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    textarea#userInput {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-input);
+      padding: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--text);
+      background: #fafafa;
+      resize: vertical;
+      min-height: 90px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      line-height: 1.5;
+    }
+    textarea#userInput:focus {
+      border-color: var(--li-blue);
+      box-shadow: 0 0 0 3px rgba(10,102,194,0.1);
+      background: white;
+    }
+    textarea#userInput.shake { animation: shake 0.45s ease; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-9px); }
+      40%       { transform: translateX(9px); }
+      60%       { transform: translateX(-6px); }
+      80%       { transform: translateX(6px); }
+    }
+
+    /* ─── CONTROLS SECTION ─── */
+    .controls-section { animation: slideUp 0.5s 0.2s ease both; }
+
+    /* Intensity Slider */
+    .slider-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .slider-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .slider-level-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 12px;
+      background: #e8f0fe;
+      color: var(--li-blue);
+      transition: all 0.25s;
+    }
+
+    /* FIX: Full cross-browser slider reset — Webkit + Firefox + IE */
+    input[type="range"] {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: linear-gradient(to right, var(--li-blue) 50%, var(--border) 50%);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      touch-action: pan-x;
+      /* Remove any border that Firefox adds */
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+    /* Webkit (Chrome/Safari/Edge) thumb */
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: white;
+      border: 2.5px solid var(--li-blue);
+      box-shadow: 0 2px 8px rgba(10,102,194,0.35);
+      cursor: grab;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 3px 12px rgba(10,102,194,0.45);
+    }
+    input[type="range"]::-webkit-slider-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+    /* Firefox thumb */
+    input[type="range"]::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: white;
+      border: 2.5px solid var(--li-blue);
+      box-shadow: 0 2px 8px rgba(10,102,194,0.35);
+      cursor: grab;
+    }
+    /* Firefox track */
+    input[type="range"]::-moz-range-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+    }
+    input[type="range"]::-moz-range-progress {
+      height: 6px;
+      background: var(--li-blue);
+      border-radius: 3px;
+    }
+    /* IE/Edge (legacy) */
+    input[type="range"]::-ms-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: white;
+      border: 2.5px solid var(--li-blue);
+      cursor: grab;
+    }
+    input[type="range"]::-ms-track {
+      height: 6px;
+      background: transparent;
+      border-color: transparent;
+      color: transparent;
+    }
+    input[type="range"]::-ms-fill-lower { background: var(--li-blue); border-radius: 3px; }
+    input[type="range"]::-ms-fill-upper { background: var(--border); border-radius: 3px; }
+
+    .slider-stops {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* Divider */
+    .controls-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    /* Toggle Buttons */
+    .toggles-label {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .toggles-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: 1.5px solid var(--border);
+      background: white;
+      border-radius: 24px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      user-select: none;
+    }
+    .toggle-btn:hover { border-color: var(--li-blue); color: var(--li-blue); background: #f0f7ff; }
+    .toggle-btn.active {
+      background: var(--li-blue);
+      border-color: var(--li-blue);
+      color: white;
+    }
+    .toggle-btn.active:hover { background: var(--li-blue-dark); border-color: var(--li-blue-dark); }
+
+    /* ─── CTA BUTTON ─── */
+    .cta-wrap { animation: slideUp 0.5s 0.3s ease both; margin-bottom: 16px; }
+    #translateBtn {
+      width: 100%;
+      height: 56px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-input);
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s;
+      box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+    }
+    #translateBtn:hover:not(:disabled) {
+      transform: scale(1.02);
+      box-shadow: 0 8px 28px rgba(255,215,0,0.55);
+      background: #ffdf00;
+    }
+    #translateBtn:active:not(:disabled) {
+      transform: scale(0.97);
+      box-shadow: 0 2px 8px rgba(255,215,0,0.3);
+    }
+    #translateBtn:disabled { cursor: not-allowed; opacity: 0.85; }
+    #translateBtn.loading {
+      animation: pulseBtn 1.4s ease-in-out infinite;
+    }
+    @keyframes pulseBtn { 0%, 100% { opacity: 1; } 50% { opacity: 0.82; } }
+
+    /* Error message */
+    #errorMsg {
+      display: none;
+      background: #fff0f0;
+      border: 1.5px solid var(--error);
+      color: var(--error);
+      border-radius: var(--radius-input);
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    /* ─── OUTPUT CARD ─── */
+    #outputCard {
+      display: none;
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    #outputCard.visible {
+      display: block;
+      animation: slideUp 0.45s ease both;
+    }
+
+    /* LinkedIn-style post header */
+    .li-post-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px 12px;
+    }
+    .li-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #b0c4de, #7fa8c8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .li-avatar svg { width: 28px; height: 28px; }
+    .li-meta { flex: 1; min-width: 0; }
+    .li-name {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: #000;
+    }
+    .li-title {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 1px;
+      line-height: 1.4;
+    }
+    .li-time {
+      font-size: 11px;
+      color: var(--lighter);
+      margin-top: 2px;
+    }
+    .li-more {
+      color: var(--lighter);
+      font-size: 20px;
+      cursor: pointer;
+      align-self: flex-start;
+      margin-top: 2px;
+      letter-spacing: 2px;
+    }
+
+    /* Post body */
+    .li-post-body {
+      padding: 2px 20px 16px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: #1a1a1a;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .li-hashtags {
+      display: none;
+      padding: 0 20px 14px;
+      color: var(--li-blue);
+      font-size: 13px;
+      font-weight: 500;
+      flex-wrap: wrap;
+      gap: 6px;
+      line-height: 1.8;
+    }
+    .li-hashtags.visible { display: flex; }
+
+    /* Engagement bar */
+    .li-engagement {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .li-reactions { font-size: 16px; margin-right: 4px; }
+    .eng-dot { color: var(--lighter); margin: 0 3px; }
+
+    /* Action buttons */
+    .li-actions {
+      display: flex;
+      gap: 12px;
+      padding: 14px 20px 16px;
+    }
+    #copyBtn, #regenBtn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: var(--radius-input);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+    }
+    #copyBtn {
+      background: white;
+      border: 1.5px solid var(--border);
+      color: var(--text);
+    }
+    #copyBtn:hover { border-color: var(--li-blue); color: var(--li-blue); background: #f0f7ff; }
+    #copyBtn.copied { background: var(--success); border-color: var(--success); color: white; }
+    #regenBtn {
+      background: var(--li-blue);
+      color: white;
+    }
+    #regenBtn:hover { background: var(--li-blue-dark); }
+    #regenBtn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    /* ─── MODAL ─── */
+    /* FIX: removed animation from overlay so it doesn't flash invisible */
+    #modalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    #modalOverlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: var(--radius-card);
+      padding: 32px 28px 28px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+      position: relative;
+      /* FIX: Simple scale-in rather than opacity-starting-at-0 */
+      animation: modalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes modalIn {
+      0%   { transform: scale(0.88) translateY(16px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+    .modal-close {
+      position: absolute;
+      top: 12px; right: 14px;
+      background: none; border: none;
+      font-size: 24px; color: var(--muted);
+      cursor: pointer; line-height: 1;
+      transition: color 0.15s;
+      padding: 4px 8px;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .modal p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .modal p a { color: var(--li-blue); text-decoration: none; }
+    .modal p a:hover { text-decoration: underline; }
+    .modal-input-wrap { position: relative; margin-bottom: 14px; }
+    #apiKeyInput {
+      width: 100%;
+      padding: 12px 44px 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-input);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fafafa;
+    }
+    #apiKeyInput:focus {
+      border-color: var(--li-blue);
+      box-shadow: 0 0 0 3px rgba(10,102,194,0.1);
+      background: white;
+    }
+    #toggleKeyVisibility {
+      position: absolute;
+      right: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      font-size: 18px;
+      transition: color 0.15s;
+      line-height: 1;
+    }
+    #toggleKeyVisibility:hover { color: var(--text); }
+    .modal-actions { display: flex; gap: 10px; }
+    #saveKeyBtn {
+      flex: 1;
+      padding: 11px;
+      background: var(--li-blue);
+      border: none;
+      border-radius: var(--radius-input);
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #saveKeyBtn:hover { background: var(--li-blue-dark); }
+    #clearKeyBtn {
+      padding: 11px 16px;
+      background: white;
+      border: 1.5px solid var(--error);
+      border-radius: var(--radius-input);
+      color: var(--error);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: none;
+    }
+    #clearKeyBtn:hover { background: #fff0f0; }
+    #keyStatus {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+      font-weight: 500;
+      min-height: 18px;
+    }
+    #keyStatus.ok { color: var(--success); }
+    #keyStatus.warn { color: var(--error); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--lighter);
+      padding: 0 0 20px;
+      animation: fadeIn 0.6s 0.4s ease both;
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes slideUp {
+      0%   { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 480px) {
+      .page-wrapper { padding: 0 14px 50px; }
+      header { padding: 20px 0 18px; flex-wrap: wrap; gap: 12px; }
+      .card { padding: 18px 16px; }
+      .logo { font-size: 20px; }
+      .toggle-btn { font-size: 12px; padding: 8px 14px; }
+      #translateBtn { font-size: 15px; height: 50px; }
+      .li-actions { flex-direction: column; }
+      #copyBtn, #regenBtn { flex: none; width: 100%; }
+      .modal { padding: 24px 20px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Floating background emojis -->
+<div class="bg-emojis" aria-hidden="true">
+  <span class="bg-emoji">🚀</span>
+  <span class="bg-emoji">✨</span>
+  <span class="bg-emoji">💼</span>
+  <span class="bg-emoji">📈</span>
+  <span class="bg-emoji">🚀</span>
+  <span class="bg-emoji">💡</span>
+  <span class="bg-emoji">🏆</span>
+  <span class="bg-emoji">🌟</span>
+  <span class="bg-emoji">🔥</span>
+  <span class="bg-emoji">✨</span>
+</div>
+
+<!-- API Key Modal -->
+<div id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <button class="modal-close" id="modalCloseBtn" aria-label="Close modal">×</button>
+    <h2 id="modalTitle">Enter your Groq API Key</h2>
+    <p>Free at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer">console.groq.com</a> — stored in your browser only, never sent anywhere except Groq.</p>
+    <div class="modal-input-wrap">
+      <input type="password" id="apiKeyInput" placeholder="gsk_..." autocomplete="off" spellcheck="false" />
+      <button id="toggleKeyVisibility" aria-label="Toggle key visibility" title="Toggle visibility">👁️</button>
+    </div>
+    <div class="modal-actions">
+      <button id="saveKeyBtn">💾 Save Key</button>
+      <button id="clearKeyBtn">🗑️ Clear</button>
+    </div>
+    <div id="keyStatus" aria-live="polite"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo-wrap">
+      <div class="logo">
+        <span class="logo-icon">🔗</span>
+        LinkedTranslate
+      </div>
+      <span class="subtitle">Google Translate. But for LinkedIn.</span>
+    </div>
+    <button class="api-key-btn" id="apiKeyHeaderBtn" aria-label="Manage Groq API Key">
+      ⚙️ API Key
+    </button>
+  </header>
+
+  <!-- Input Card -->
+  <section class="card input-section">
+    <div class="card-label">💬 What actually happened?</div>
+    <textarea id="userInput" rows="3" aria-label="Describe what actually happened"></textarea>
+  </section>
+
+  <!-- Controls Card -->
+  <section class="card controls-section">
+    <!-- Intensity Slider -->
+    <div class="slider-label-row">
+      <span class="slider-title">⚡ Intensity</span>
+      <span class="slider-level-badge" id="sliderBadge">Thought Leader</span>
+    </div>
+    <input type="range" id="intensitySlider" min="1" max="3" step="1" value="2" aria-label="Cringe intensity level" aria-valuetext="Thought Leader" />
+    <div class="slider-stops" aria-hidden="true">
+      <span>Professional</span>
+      <span>Thought Leader</span>
+      <span>Full LinkedIn 🚀</span>
+    </div>
+
+    <div class="controls-divider"></div>
+
+    <!-- Toggles -->
+    <div class="toggles-label">🎛️ Add-ons</div>
+    <div class="toggles-row" role="group" aria-label="Post add-ons">
+      <button class="toggle-btn" id="tgl-lifeLesson" data-feature="lifeLesson" aria-pressed="false">💡 Life Lesson</button>
+      <button class="toggle-btn" id="tgl-emojis"     data-feature="emojis"      aria-pressed="false">😂 Emojis</button>
+      <button class="toggle-btn" id="tgl-essayMode"  data-feature="essayMode"   aria-pressed="false">📝 Essay Mode</button>
+      <button class="toggle-btn" id="tgl-hashtags"   data-feature="hashtags"    aria-pressed="false"># Hashtags</button>
+    </div>
+  </section>
+
+  <!-- Translate Button -->
+  <div class="cta-wrap">
+    <button id="translateBtn">✨ TRANSLATE TO LINKEDIN</button>
+  </div>
+
+  <!-- Error Message -->
+  <div id="errorMsg" role="alert" aria-live="assertive"></div>
+
+  <!-- Output Card (hidden until generation) -->
+  <div id="outputCard" aria-live="polite" aria-label="Generated LinkedIn post">
+    <div class="li-post-header">
+      <div class="li-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8.5" r="3.8" fill="rgba(255,255,255,0.85)"/>
+          <path d="M3.5 21c0-4.5 3.8-7.5 8.5-7.5s8.5 3 8.5 7.5" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="li-meta">
+        <div class="li-name">Alex Johnson</div>
+        <div class="li-title">Thought Leader | Disrupting Things</div>
+        <div class="li-time">Just now · 🌐</div>
+      </div>
+      <span class="li-more" aria-hidden="true">•••</span>
+    </div>
+    <div class="li-post-body" id="postBody"></div>
+    <div class="li-hashtags" id="postHashtags"></div>
+    <div class="li-engagement">
+      <span class="li-reactions" aria-hidden="true">👍❤️💡</span>
+      <span id="engLikes"></span>
+      <span class="eng-dot" aria-hidden="true">·</span>
+      <span id="engComments"></span>
+      <span class="eng-dot" aria-hidden="true">·</span>
+      <span id="engReposts"></span>
+    </div>
+    <div class="li-actions">
+      <button id="copyBtn">📋 Copy Post</button>
+      <button id="regenBtn">🔄 Regenerate</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>LinkedTranslate &mdash; because someone had to.</footer>
+</div>
+
+<script>
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+const state = {
+  apiKey:     localStorage.getItem('linkedtranslate_groq_key') || '',
+  intensity:  2,
+  lifeLesson: false,
+  emojis:     false,
+  essayMode:  false,
+  hashtags:   false,
+  isLoading:  false,
+  lastInput:  '',
+};
+
+// ─── PLACEHOLDERS ──────────────────────────────────────────────────────────────
+const PLACEHOLDERS = [
+  'I swam today',
+  'I ate cereal for breakfast',
+  'I finally cleaned my desk',
+  'I took a nap',
+  'I watched Netflix all weekend',
+  'I went for a walk',
+  'I drank too much coffee',
+  'I missed a meeting',
+  'I replied to an email I\'ve been avoiding',
+  'I made a sandwich',
+];
+function getRandomPlaceholder() {
+  return PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)];
+}
+
+// ─── INTENSITY ─────────────────────────────────────────────────────────────────
+const INTENSITY_LABELS = { 1: 'Professional', 2: 'Thought Leader', 3: 'Full LinkedIn 🚀' };
+
+// ─── DOM REFS ──────────────────────────────────────────────────────────────────
+const $textarea      = document.getElementById('userInput');
+const $slider        = document.getElementById('intensitySlider');
+const $sliderBadge   = document.getElementById('sliderBadge');
+const $translateBtn  = document.getElementById('translateBtn');
+const $errorMsg      = document.getElementById('errorMsg');
+const $outputCard    = document.getElementById('outputCard');
+const $postBody      = document.getElementById('postBody');
+const $postHashtags  = document.getElementById('postHashtags');
+const $engLikes      = document.getElementById('engLikes');
+const $engComments   = document.getElementById('engComments');
+const $engReposts    = document.getElementById('engReposts');
+const $copyBtn       = document.getElementById('copyBtn');
+const $regenBtn      = document.getElementById('regenBtn');
+const $modalOverlay  = document.getElementById('modalOverlay');
+const $apiKeyInput   = document.getElementById('apiKeyInput');
+const $saveKeyBtn    = document.getElementById('saveKeyBtn');
+const $clearKeyBtn   = document.getElementById('clearKeyBtn');
+const $keyStatus     = document.getElementById('keyStatus');
+const $modalCloseBtn = document.getElementById('modalCloseBtn');
+const $apiKeyHeaderBtn = document.getElementById('apiKeyHeaderBtn');
+const $toggleKeyVis  = document.getElementById('toggleKeyVisibility');
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+$textarea.placeholder = getRandomPlaceholder();
+syncSliderUI();
+syncApiKeyBtn();
+
+// ─── SLIDER ────────────────────────────────────────────────────────────────────
+function syncSliderUI() {
+  const val = parseInt($slider.value);
+  state.intensity = val;
+  const label = INTENSITY_LABELS[val];
+  $sliderBadge.textContent = label;
+  $slider.setAttribute('aria-valuetext', label);
+  // Update gradient fill — 1→0%, 2→50%, 3→100%
+  const pct = ((val - 1) / 2) * 100;
+  $slider.style.background = `linear-gradient(to right, var(--li-blue) ${pct}%, var(--border) ${pct}%)`;
+}
+
+$slider.addEventListener('input', syncSliderUI);
+$slider.addEventListener('change', syncSliderUI); // catches keyboard arrow key changes
+
+// ─── TOGGLES ──────────────────────────────────────────────────────────────────
+function toggleFeature(feature) {
+  state[feature] = !state[feature];
+  const btn = document.getElementById(`tgl-${feature}`);
+  btn.classList.toggle('active', state[feature]);
+  btn.setAttribute('aria-pressed', String(state[feature]));
+}
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => toggleFeature(btn.dataset.feature));
+});
+
+// ─── API KEY MODAL ─────────────────────────────────────────────────────────────
+function openModal(hint) {
+  // Populate field if key exists
+  if (state.apiKey) {
+    $apiKeyInput.value = state.apiKey;
+    $apiKeyInput.type  = 'password';
+    $toggleKeyVis.textContent = '👁️';
+    $clearKeyBtn.style.display = 'block';
+    $keyStatus.textContent = '✅ API key is saved';
+    $keyStatus.className   = 'ok';
+  } else {
+    $apiKeyInput.value = '';
+    $clearKeyBtn.style.display = 'none';
+    $keyStatus.textContent = hint || '';
+    $keyStatus.className   = hint ? 'warn' : '';
+  }
+  $modalOverlay.classList.add('open');
+  // Delay focus so animation has started
+  setTimeout(() => $apiKeyInput.focus(), 60);
+}
+
+function closeModal() {
+  $modalOverlay.classList.remove('open');
+}
+
+function saveApiKey() {
+  const key = $apiKeyInput.value.trim();
+  if (!key) {
+    $keyStatus.textContent = '⚠️ Please enter a key first';
+    $keyStatus.className   = 'warn';
+    return;
+  }
+  if (!key.startsWith('gsk_')) {
+    $keyStatus.textContent = '⚠️ Groq keys start with gsk_ — double-check yours';
+    $keyStatus.className   = 'warn';
+    return;
+  }
+  state.apiKey = key;
+  localStorage.setItem('linkedtranslate_groq_key', key);
+  $keyStatus.textContent = '✅ Key saved!';
+  $keyStatus.className   = 'ok';
+  $clearKeyBtn.style.display = 'block';
+  syncApiKeyBtn();
+  setTimeout(closeModal, 900);
+}
+
+function clearApiKey() {
+  state.apiKey = '';
+  localStorage.removeItem('linkedtranslate_groq_key');
+  $apiKeyInput.value     = '';
+  $apiKeyInput.type      = 'password';
+  $toggleKeyVis.textContent = '👁️';
+  $clearKeyBtn.style.display = 'none';
+  $keyStatus.textContent = '🗑️ Key cleared.';
+  $keyStatus.className   = '';
+  syncApiKeyBtn();
+}
+
+function syncApiKeyBtn() {
+  if (state.apiKey) {
+    $apiKeyHeaderBtn.textContent = '✅ API Key';
+    $apiKeyHeaderBtn.classList.add('has-key');
+  } else {
+    $apiKeyHeaderBtn.textContent = '⚙️ API Key';
+    $apiKeyHeaderBtn.classList.remove('has-key');
+  }
+}
+
+// Modal events
+$apiKeyHeaderBtn.addEventListener('click', () => openModal());
+$modalCloseBtn.addEventListener('click', closeModal);
+$modalOverlay.addEventListener('click', e => { if (e.target === $modalOverlay) closeModal(); });
+$saveKeyBtn.addEventListener('click', saveApiKey);
+$clearKeyBtn.addEventListener('click', clearApiKey);
+$apiKeyInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveApiKey(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $modalOverlay.classList.contains('open')) closeModal(); });
+
+// Toggle key visibility
+$toggleKeyVis.addEventListener('click', () => {
+  const isPassword = $apiKeyInput.type === 'password';
+  $apiKeyInput.type = isPassword ? 'text' : 'password';
+  $toggleKeyVis.textContent = isPassword ? '🙈' : '👁️';
+});
+
+// ─── PROMPT BUILDER ────────────────────────────────────────────────────────────
+function buildSystemPrompt(intensity, lifeLesson, emojis, essayMode, hashtags) {
+  const intensityInstructions = {
+    1: `Write like a genuine, grounded professional. Minimal buzzwords. Sound like a real person reflecting on their day. Keep it warm and relatable. No over-the-top claims.`,
+    2: `Write like a LinkedIn thought leader. Use buzzwords like "leverage", "intentional", "growth mindset", "journey", "resilience". Add a humble brag. Reference personal development. Make an ordinary thing sound meaningful.`,
+    3: `Write like the most unhinged LinkedIn influencer alive. Use maximum buzzwords. Reference disruption, synergy, the grind, personal branding. Extract 3-5 numbered life lessons from the mundane event. Use dramatic line breaks. Make it sound like this small thing changed your entire worldview. Go completely over the top — but keep it sincere-sounding, never sarcastic.`,
+  };
+  const emojiInstruction = emojis
+    ? `Use emojis LIBERALLY throughout the post. Every few sentences should have one. Use rocket 🚀, sparkles ✨, fire 🔥, lightbulb 💡, chart 📈, hands 🙌 etc.`
+    : `Use ZERO emojis. None at all.`;
+  const lengthInstruction = essayMode
+    ? `Format as a LinkedIn essay: each sentence on its own line, with a blank line between each sentence. This is the classic LinkedIn "scroll-bait" format.`
+    : `Keep it short and punchy. 3-5 sentences max. No line breaks between sentences.`;
+  const lessonInstruction = lifeLesson
+    ? `You MUST end the post with a standalone line starting with "Lesson:" followed by a profound-sounding life takeaway from this mundane event.`
+    : ``;
+  const hashtagInstruction = hashtags
+    ? `After the post, on a new line, add 6 relevant LinkedIn hashtags. Format: #hashtag1 #hashtag2 etc. Make them generic LinkedIn-style: #leadership #growth #mindset #success etc.`
+    : `Do NOT include any hashtags.`;
+
+  return `You are LinkedTranslate, a tool that rewrites mundane everyday statements as LinkedIn posts.
+
+INTENSITY LEVEL: ${intensityInstructions[intensity]}
+
+EMOJI RULES: ${emojiInstruction}
+
+FORMAT: ${lengthInstruction}
+
+${lessonInstruction}
+
+${hashtagInstruction}
+
+EUPHEMISM RULES (this is the most important part):
+- ALWAYS translate the raw human situation into the most professional-sounding corporate euphemism possible.
+- Examples of how to think:
+  - "arrested for fraud" → "given the opportunity to reflect from a high-security environment"
+  - "took a massive dump at work" → "prioritized a major internal release during business hours"
+  - "hooked up with my ex" → "re-engaged with a former strategic partner"
+  - "lost $10k gambling" → "a 14-tier diversified portfolio didn't yield the expected ROI"
+  - "farted and blamed the intern" → "released internal pressure and delegated full ownership to a junior team member"
+  - "doomscrolling until stressed enough to work" → "staying informed on industry trends until cultivating the necessary sense of urgency"
+- The euphemism should be so polished it takes a second to realize what actually happened. That's the joke.
+- Never name the embarrassing thing directly. Always dress it up completely.
+
+CRITICAL RULES:
+- Never be sarcastic. Always sound 100% sincere.
+- Never mention that you are an AI or that this is a translation.
+- Never add a subject line or title. Start the post directly.
+- Output ONLY the LinkedIn post. Nothing else. No preamble, no explanation.`;
+}
+
+// ─── GROQ API ──────────────────────────────────────────────────────────────────
+async function callGroqAPI(userInput) {
+  const systemPrompt = buildSystemPrompt(
+    state.intensity, state.lifeLesson, state.emojis, state.essayMode, state.hashtags
+  );
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${state.apiKey}`,
+    },
+    body: JSON.stringify({
+      model:       'llama-3.3-70b-versatile',
+      messages:    [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: userInput },
+      ],
+      temperature: 0.9,
+      max_tokens:  600,
+    }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) throw new Error('Invalid API key. Check your Groq key and try again.');
+    if (response.status === 429) throw new Error('Rate limit hit. Wait a moment and try again.');
+    throw new Error(`API error ${response.status}. Please try again.`);
+  }
+  const data = await response.json();
+  return data.choices[0].message.content.trim();
+}
+
+// ─── LOADING & ERRORS ─────────────────────────────────────────────────────────
+let errorTimer = null;
+
+function setLoading(bool) {
+  state.isLoading  = bool;
+  $translateBtn.disabled = bool;
+  $regenBtn.disabled     = bool;
+  if (bool) {
+    $translateBtn.textContent = 'Glazing your post... 🚀';
+    $translateBtn.classList.add('loading');
+  } else {
+    $translateBtn.textContent = '✨ TRANSLATE TO LINKEDIN';
+    $translateBtn.classList.remove('loading');
+  }
+}
+
+function showError(msg) {
+  $errorMsg.textContent = '⚠️ ' + msg;
+  $errorMsg.style.display = 'block';
+  clearTimeout(errorTimer);
+  errorTimer = setTimeout(() => { $errorMsg.style.display = 'none'; }, 5500);
+}
+function hideError() {
+  clearTimeout(errorTimer);
+  $errorMsg.style.display = 'none';
+}
+
+// ─── OUTPUT RENDERING ─────────────────────────────────────────────────────────
+function splitHashtags(text) {
+  const lines  = text.split('\n');
+  const tagIdx = lines.findLastIndex(l => l.trim().startsWith('#'));
+  if (tagIdx !== -1 && state.hashtags) {
+    const body = lines.slice(0, tagIdx).join('\n').trim();
+    const tags = lines[tagIdx].trim();
+    return { body, tags };
+  }
+  return { body: text.trim(), tags: '' };
+}
+
+function renderOutput(text) {
+  const { body, tags } = splitHashtags(text);
+
+  $postBody.textContent = body;
+
+  // Hashtags
+  if (state.hashtags && tags) {
+    $postHashtags.textContent = tags;
+    $postHashtags.classList.add('visible');
+  } else {
+    $postHashtags.textContent = '';
+    $postHashtags.classList.remove('visible');
+  }
+
+  // Fake engagement — randomized each time
+  const likes    = Math.floor(Math.random() * 801) + 400;
+  const comments = Math.floor(Math.random() * 351) + 50;
+  const reposts  = Math.floor(Math.random() * 121) + 20;
+  $engLikes.textContent    = likes.toLocaleString() + ' reactions';
+  $engComments.textContent = comments + ' comments';
+  $engReposts.textContent  = reposts + ' reposts';
+
+  // FIX: toggle .visible class so animation fires every time
+  $outputCard.classList.remove('visible');
+  void $outputCard.offsetWidth; // force reflow
+  $outputCard.classList.add('visible');
+
+  // Scroll into view smoothly
+  setTimeout(() => {
+    $outputCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 80);
+}
+
+// ─── MAIN TRANSLATE HANDLER ───────────────────────────────────────────────────
+async function handleTranslate() {
+  if (state.isLoading) return;
+  hideError();
+
+  // Validate: API key
+  if (!state.apiKey) {
+    openModal('⚠️ Please add your Groq API key first');
+    return;
+  }
+
+  // Validate: input
+  const inputVal = $textarea.value.trim();
+  if (!inputVal) {
+    // Shake textarea
+    $textarea.classList.remove('shake');
+    void $textarea.offsetWidth;
+    $textarea.classList.add('shake');
+    $textarea.addEventListener('animationend', () => $textarea.classList.remove('shake'), { once: true });
+    showError('Tell us what happened first!');
+    $textarea.focus();
+    return;
+  }
+
+  state.lastInput = inputVal;
+  setLoading(true);
+
+  try {
+    const generated = await callGroqAPI(inputVal);
+    renderOutput(generated);
+  } catch (err) {
+    showError(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ─── REGENERATE ───────────────────────────────────────────────────────────────
+async function handleRegenerate() {
+  if (!state.lastInput || state.isLoading) return;
+  hideError();
+  setLoading(true);
+  try {
+    const generated = await callGroqAPI(state.lastInput);
+    renderOutput(generated);
+  } catch (err) {
+    showError(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ─── COPY ─────────────────────────────────────────────────────────────────────
+async function handleCopy() {
+  let text = $postBody.textContent;
+  if (state.hashtags && $postHashtags.textContent) {
+    text += '\n\n' + $postHashtags.textContent;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // Fallback for file:// protocol
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  $copyBtn.textContent = '✅ Copied!';
+  $copyBtn.classList.add('copied');
+  setTimeout(() => {
+    $copyBtn.textContent = '📋 Copy Post';
+    $copyBtn.classList.remove('copied');
+  }, 2000);
+}
+
+// ─── EVENT LISTENERS ──────────────────────────────────────────────────────────
+$translateBtn.addEventListener('click', handleTranslate);
+$regenBtn.addEventListener('click', handleRegenerate);
+$copyBtn.addEventListener('click', handleCopy);
+
+// Ctrl+Enter / Cmd+Enter = translate
+$textarea.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleTranslate();
+});
+</script>
+</body>
+</html>

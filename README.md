@@ -2,6 +2,8 @@
 
 > **Google Translate. But for LinkedIn.**
 
+**[🌐 Live Demo → linked-translate.vercel.app](https://linked-translate.vercel.app)**
+
 Turn any mundane thing you did into a glazed, over-the-top LinkedIn post — powered by Groq AI.
 
 ![LinkedTranslate screenshot](https://raw.githubusercontent.com/ahmed-145/LinkedTranslate/main/screenshot.png)
@@ -34,9 +36,12 @@ You type something embarrassingly normal. LinkedTranslate rewrites it like you j
 
 ## Setup
 
-**No install. No build step. No package.json.**
+**Option 1 — Just use it online:**
+👉 [linked-translate.vercel.app](https://linked-translate.vercel.app)
 
-1. Download or clone this repo
+**Option 2 — Run locally (no install, no build step):**
+
+1. Clone this repo
 2. Open `index.html` in your browser
 3. Get a free API key at [console.groq.com](https://console.groq.com)
 4. Click **⚙️ API Key**, paste your key, save

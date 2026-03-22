@@ -417,6 +417,9 @@ const $modalX      = $('modalX');
 const $apiHdrBtn   = $('apiKeyHeaderBtn');
 const $eyeBtn      = $('eyeBtn');
 
+// ── SLIDER LABELS (must be before INIT) ─────────────────────────────────────
+const IL = {1:'Professional', 2:'Thought Leader', 3:'Full LinkedIn 🚀'};
+
 // ── INIT ─────────────────────────────────────────────────────────────────────
 applyMode('linkedin');
 syncSlider();
@@ -451,7 +454,6 @@ function applyMode(mode) {
 $indSel.addEventListener('change', () => { S.industry = $indSel.value; });
 
 // ── SLIDER ────────────────────────────────────────────────────────────────────
-const IL = {1:'Professional',2:'Thought Leader',3:'Full LinkedIn 🚀'};
 function syncSlider() {
   const v = +$slider.value;
   S.intensity = v;
